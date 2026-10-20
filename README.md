@@ -1,5 +1,8 @@
 # Hexo + Butterfly 博客
 
+- 线上地址：**https://yayo556788.github.io/**
+- 源码仓库：https://github.com/yayo556788/yayo556788.github.io
+
 基于 Hexo 8 + Butterfly 5 的个人博客，推送到 GitHub 后由 GitHub Actions 自动构建并发布到 GitHub Pages。
 
 ## 目录结构
@@ -33,6 +36,8 @@ npx hexo clean       # 清缓存（改了主题配置没生效时先用它）
 
 ## 发布到 GitHub
 
+> 本仓库已经完成下面全部步骤（仓库已建、Pages 已启用为 GitHub Actions、`origin` 已指向 SSH 地址），以下内容留作重建或换仓库时的参考。
+
 ### 1. 建仓库
 
 - 想要 `https://<用户名>.github.io` 这个地址：仓库名必须是 **`<用户名>.github.io`**
@@ -57,15 +62,25 @@ git push -u origin main
 
 推完第一次后，Actions 里会出现 "构建并部署到 GitHub Pages"，跑完即可访问站点。
 
-## 三处建议尽快改成自己的
+## 日常写作流程
+
+```bash
+npx hexo new "文章标题"   # 写
+npx hexo server          # 本地看
+git add . && git commit -m "post: 文章标题" && git push   # 推送后 1 分钟内自动上线
+```
+
+## 改成自己的信息
+
+站点已按 `yayo556788` 配置完成（`url`、社交链接、侧边栏、关于页都已替换）。要改的话：
 
 | 位置 | 改什么 |
 | --- | --- |
-| `_config.yml` | `title` / `subtitle` / `author` |
-| `_config.butterfly.yml` | `social` 里的 GitHub 链接、侧边栏 `card_author.button.link` |
-| `source/about/index.md` | 自我介绍与联系方式 |
+| `_config.yml` | `title`（现为「Yayo 的博客」）/ `subtitle` / `author` |
+| `_config.butterfly.yml` | `nav.logo`（导航栏图标）、`avatar.img`（头像）、`social`（社交链接） |
+| `source/about/index.md` | 自我介绍、邮箱 |
 
-把配置里所有 `YOUR_GITHUB_USERNAME` 换成你的 GitHub 用户名即可（工作流跑起来时会自动覆盖 `url`/`root`，其余是页面上的链接）。
+头像和图标：把图片放进 `source/img/`，再写 `/img/文件名.png`（不要写相对路径，子路径部署会失效）。
 
 ## 常见问题
 
