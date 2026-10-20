@@ -1,0 +1,106 @@
+# ===========================================================
+# Hexo 站点配置
+# 文档：https://hexo.io/zh-cn/docs/configuration
+# ===========================================================
+
+# ---------- 站点信息（第一件要改的事） ----------
+title: Yayo 的博客
+subtitle: '记录技术与生活'
+description: '一个用 Hexo 和 Butterfly 搭建的个人博客'
+keywords:
+author: Yayo
+language: zh-CN
+timezone: 'Asia/Shanghai'
+
+# ---------- 网址 ----------
+# 主站仓库（<用户名>.github.io）：url 填 https://<用户名>.github.io，root 填 /
+# 项目仓库（如 blog）：url 填 https://<用户名>.github.io/blog，root 填 /blog/
+# 注意：这两个值会被 GitHub Actions 按仓库类型自动覆盖，本地不用改也能跑起来
+url: https://yayo556788.github.io
+root: /
+permalink: :year/:month/:day/:title/
+permalink_defaults:
+pretty_urls:
+  trailing_index: true
+  trailing_html: true
+
+# ---------- 目录 ----------
+source_dir: source
+public_dir: public
+tag_dir: tags
+archive_dir: archives
+category_dir: categories
+code_dir: downloads/code
+i18n_dir: :lang
+skip_render:
+
+# ---------- 写作 ----------
+new_post_name: :title.md
+default_layout: post
+titlecase: false
+external_link:
+  enable: true
+  field: site
+  exclude: ''
+filename_case: 0
+render_drafts: false
+post_asset_folder: false
+relative_link: false
+future: true
+
+# 代码高亮：Butterfly 自带代码块样式（含复制按钮、语言标签）
+highlight:
+  enable: true
+  line_number: true
+  auto_detect: false
+  tab_replace: '  '
+  wrap: true
+  hljs: false
+prismjs:
+  enable: false
+  preprocess: true
+  line_number: true
+  tab_replace: ''
+
+# ---------- 首页 ----------
+index_generator:
+  path: ''
+  per_page: 10
+  order_by: -date
+
+default_category: 未分类
+category_map:
+tag_map:
+
+# ---------- 元数据 ----------
+meta_generator: true
+
+# ---------- 日期格式 ----------
+date_format: YYYY-MM-DD
+time_format: HH:mm:ss
+updated_option: 'mtime'
+
+# ---------- 分页 ----------
+per_page: 10
+pagination_dir: page
+
+# ---------- 包含/排除 ----------
+include:
+exclude:
+ignore:
+
+# ---------- 本地搜索（配合主题的 local_search） ----------
+search:
+  path: search.xml
+  field: post
+  content: true
+  format: html
+
+# ---------- 主题 ----------
+theme: butterfly
+
+# ---------- 部署 ----------
+# 本项目用 GitHub Actions 自动构建发布，不需要 hexo-deployer-git
+# 想改成手动 `hexo deploy` 推送，见 README 里的说明
+deploy:
+  type: ''

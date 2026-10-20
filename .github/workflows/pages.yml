@@ -1,0 +1,82 @@
+name: 构建并部署到 GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  # 也可以在 Actions 页面手动点一下触发
+  workflow_dispatch:
+
+# GITHUB_TOKEN 需要这些权限才能发布 Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只跑一个发布任务，避免互相覆盖
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取源码
+        uses: actions/checkout@v4
+
+      - name: 准备 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # npm ci 会顺带执行 postinstall，把 Butterfly 主题同步到 themes/ 目录
+      - name: 安装依赖
+        run: npm ci
+
+      # 自动识别仓库类型：
+      #   <用户名>.github.io  → 主站，站点在根路径 /
+      #   其它仓库名（如 blog）→ 项目页，站点在子路径 /blog/
+      # 这样主站和项目页两种仓库都不用改配置
+      - name: 按仓库类型校准站点地址
+        run: |
+          set -euo pipefail
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+          if [ "$REPO" = "$OWNER.github.io" ]; then
+            echo "SITE_URL=https://$OWNER.github.io" >> "$GITHUB_ENV"
+            echo "SITE_ROOT=/" >> "$GITHUB_ENV"
+          else
+            echo "SITE_URL=https://$OWNER.github.io/$REPO" >> "$GITHUB_ENV"
+            echo "SITE_ROOT=/$REPO/" >> "$GITHUB_ENV"
+          fi
+
+      - name: 写入 url / root
+        run: |
+          set -euo pipefail
+          sed -i "s|^url:.*|url: ${SITE_URL}|" _config.yml
+          sed -i "s|^root:.*|root: ${SITE_ROOT}|" _config.yml
+          echo "本次构建使用的地址："
+          grep -E '^(url|root):' _config.yml
+
+      - name: 生成静态文件
+        run: npm run build
+
+      - name: 配置 Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上传构建产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
