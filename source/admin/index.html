@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>博客后台</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#ffffff; --line:#e4e8ef; --text:#1f2430; --muted:#6b7280;
+    --accent:#2f6df6; --accent-ink:#fff; --accent-soft:#eaf0ff;
+    --danger:#d93a3a; --ok:#1a9c62; --warn:#b8791a; --radius:14px;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#111318; --panel:#1a1d24; --line:#2a2f39; --text:#e7e9ee; --muted:#8f98a8;
+      --accent:#5b8dff; --accent-soft:#1e2637;
+      --danger:#ef6b6b; --ok:#3ecf8e; --warn:#e0a83a;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text); min-height:100dvh;
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent);text-decoration:none}
+  h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+  .muted{color:var(--muted)}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+  /* ---------- 登录 ---------- */
+  .login-wrap{display:grid;place-items:center;min-height:100dvh;padding:24px}
+  .login{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);box-shadow:var(--shadow);padding:28px}
+  .login h1{font-size:20px;margin-bottom:6px}
+  .login p.sub{margin:0 0 22px;font-size:13.5px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input[type=text],input[type=password],input[type=datetime-local],textarea,select{
+    width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:9px;
+    background:var(--panel);color:var(--text);font:inherit;font-size:14px;outline:none;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  textarea{resize:vertical;line-height:1.7}
+  .row{display:flex;gap:8px}
+  .check{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted);margin:12px 0 18px;cursor:pointer}
+  .check input{width:15px;height:15px;accent-color:var(--accent);margin:0}
+
+  button{font:inherit;font-size:14px;cursor:pointer;border-radius:9px;padding:9px 16px;
+    border:1px solid var(--line);background:var(--panel);color:var(--text);transition:.15s}
+  button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+  button.primary:hover:not(:disabled){filter:brightness(1.08);color:var(--accent-ink)}
+  button.ghost{background:transparent}
+  button.danger{color:var(--danger);border-color:var(--line)}
+  button.danger:hover:not(:disabled){border-color:var(--danger);color:var(--danger)}
+  .block{width:100%}
+  .btn-sm{padding:5px 10px;font-size:13px;border-radius:7px}
+
+  .tip{margin-top:18px;font-size:13px;color:var(--muted);border-top:1px dashed var(--line);padding-top:14px}
+  .tip summary{cursor:pointer;color:var(--text);font-size:13.5px;outline:none}
+  .tip ol{padding-left:18px;margin:10px 0 0}
+  .tip li{margin-bottom:6px}
+  code{background:var(--accent-soft);padding:1px 5px;border-radius:5px;font-size:12.5px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .err{margin-top:14px;padding:10px 12px;border-radius:9px;font-size:13.5px;
+    background:rgba(217,58,58,.1);color:var(--danger);border:1px solid rgba(217,58,58,.25)}
+
+  /* ---------- 主界面 ---------- */
+  .bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;height:58px}
+  .brand{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .bar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+  .tabs{display:flex;gap:4px;padding:14px 0 0}
+  .tabs button{border:none;background:transparent;color:var(--muted);padding:8px 14px;border-radius:9px}
+  .tabs button.active{background:var(--panel);color:var(--text);box-shadow:var(--shadow);font-weight:500}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+  .card h2{font-size:15px;margin-bottom:4px}
+  .card .hint{font-size:13px;color:var(--muted);margin:0 0 14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:780px){ .grid2{grid-template-columns:1fr} }
+
+  .preview{position:relative;border:1px dashed var(--line);border-radius:10px;overflow:hidden;
+    display:grid;place-items:center;background:var(--bg)}
+  .preview img{display:block;max-width:100%}
+  .preview.square{aspect-ratio:1/1;max-width:180px}
+  .preview.avatar{width:132px;height:132px;border-radius:50%;overflow:hidden;margin:0 auto 14px}
+  .preview.avatar img{width:100%;height:100%;object-fit:cover}
+  .preview.banner{aspect-ratio:16/7;width:100%}
+  .preview.banner img{width:100%;height:100%;object-fit:cover}
+  .preview .ph{font-size:13px;color:var(--muted);padding:20px;text-align:center}
+
+  .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .actions .muted{font-size:13px}
+  .file-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:9px;
+    padding:8px 14px;font-size:13.5px;cursor:pointer;transition:.15s}
+  .file-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .file-btn input{display:none}
+
+  .badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:4px 10px;
+    border-radius:99px;border:1px solid var(--line);color:var(--muted);background:var(--panel)}
+  .badge .dot{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+  .badge.ok{color:var(--ok);border-color:rgba(26,156,98,.3);background:rgba(26,156,98,.08)}
+  .badge.ok .dot{background:var(--ok)}
+  .badge.run .dot{background:var(--warn);animation:pulse 1.4s infinite}
+  .badge.fail{color:var(--danger);border-color:rgba(217,58,58,.3);background:rgba(217,58,58,.08)}
+  .badge.fail .dot{background:var(--danger)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12.5px;color:var(--muted);font-weight:500}
+  tbody tr:last-child td{border-bottom:none}
+  td.title{font-weight:500}
+  td.actions-cell{white-space:nowrap;text-align:right}
+
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .toolbar .spacer{flex:1}
+
+  .editor-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+  .editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:780px){ .editor-grid{grid-template-columns:1fr} }
+  .editor-body{margin-top:14px}
+  .editor-body textarea{min-height:340px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:13.5px}
+  .md-preview{border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-height:340px;
+    background:var(--bg);overflow:auto;font-size:14.5px}
+  .md-preview h1,.md-preview h2,.md-preview h3{margin:16px 0 8px}
+  .md-preview pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto}
+  .md-preview code{background:var(--accent-soft)}
+  .md-preview pre code{background:none;padding:0}
+  .md-preview img{max-width:100%}
+  .md-preview blockquote{border-left:3px solid var(--accent);margin:12px 0;padding:2px 14px;color:var(--muted)}
+  .md-preview table{border:1px solid var(--line)}
+
+  .toast-box{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:99;
+    display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+  .toast{background:var(--text);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13.5px;
+    box-shadow:var(--shadow);animation:up .2s ease-out}
+  .toast.bad{background:var(--danger);color:#fff}
+  @keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .empty{padding:36px;text-align:center;color:var(--muted);font-size:14px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);
+    border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast-box" id="toasts"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+   * 配置：换仓库时只改这里
+   * ============================================================ */
+  var CFG = {
+    owner: 'yayo556788',
+    repo: 'yayo556788.github.io',
+    branch: 'main',
+    siteUrl: 'https://yayo556788.github.io'
+  };
+  var API = 'https://api.github.com';
+  var T = CFG.owner + '/' + CFG.repo;
+  var DEFAULT_AVATAR = '/img/butterfly-icon.png';
+
+  var state = {
+    token: '',
+    user: null,
+    tab: 'appearance',
+    posts: null,
+    postsLoading: false,
+    editing: null,          // {mode, path, slug, title, date, categories, tags, description, body}
+    current: { avatar: '', banner: '' },
+    pending: { avatar: null, banner: null },
+    previewUrl: { avatar: '', banner: '' },
+    build: null,
+    busy: false
+  };
+
+  var app = document.getElementById('app');
+  var toasts = document.getElementById('toasts');
+
+  /* ============================================================
+   * Token 存储
+   * ============================================================ */
+  var store = {
+    get: function () {
+      return localStorage.getItem('hexo-admin-token') ||
+             sessionStorage.getItem('hexo-admin-token') || '';
+    },
+    set: function (t, remember) {
+      store.clear();
+      (remember ? localStorage : sessionStorage).setItem('hexo-admin-token', t);
+    },
+    clear: function () {
+      localStorage.removeItem('hexo-admin-token');
+      sessionStorage.removeItem('hexo-admin-token');
+    }
+  };
+
+  /* ============================================================
+   * GitHub API
+   * ============================================================ */
+  function gh(path, options) {
+    options = options || {};
+    var headers = {
+      'Authorization': 'Bearer ' + state.token,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    };
+    if (options.body) headers['Content-Type'] = 'application/json';
+    if (options.headers) Object.keys(options.headers).forEach(function (k) { headers[k] = options.headers[k]; });
+
+    return fetch(API + path, {
+      method: options.method || 'GET',
+      headers: headers,
+      body: options.body
+    }).then(function (res) {
+      if (res.status === 204) return { status: 204, data: null };
+      return res.json().catch(function () { return null; }).then(function (data) {
+        if (!res.ok) {
+          var msg = (data && data.message) || ('HTTP ' + res.status);
+          if (res.status === 401) msg = 'Token 无效或已过期，请重新登录';
+          if (res.status === 403) msg = '权限不足或触发限流：' + msg;
+          if (res.status === 404) msg = '找不到资源（检查 token 是否有该仓库权限）';
+          if (res.status === 409) msg = '冲突：远端文件已变更，请刷新后重试';
+          var err = new Error(msg);
+          err.status = res.status;
+          err.data = data;
+          throw err;
+        }
+        return { status: res.status, data: data };
+      });
+    });
+  }
+
+  function encodePath(p) {
+    return p.split('/').map(encodeURIComponent).join('/');
+  }
+
+  function b64FromBytes(u8) {
+    var bin = '', CH = 0x8000;
+    for (var i = 0; i < u8.length; i += CH) {
+      bin += String.fromCharCode.apply(null, u8.subarray(i, i + CH));
+    }
+    return btoa(bin);
+  }
+  function b64Encode(str) {
+    return b64FromBytes(new TextEncoder().encode(str));
+  }
+  function b64Decode(b64) {
+    var bin = atob(String(b64).replace(/\s/g, ''));
+    var u8 = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(u8);
+  }
+
+  // 读取仓库里的文本文件，不存在返回 null
+  function getFile(path) {
+    return gh('/repos/' + T + '/contents/' + encodePath(path) + '?ref=' + CFG.branch)
+      .then(function (r) { return { sha: r.data.sha, text: b64Decode(r.data.content) }; })
+      .catch(function (e) { if (e.status === 404) return null; throw e; });
+  }
+
+  function putFile(path, text, message) {
+    return getFile(path).then(function (existing) {
+      var body = { message: message, content: b64Encode(text), branch: CFG.branch };
+      if (existing) body.sha = existing.sha;
+      return gh('/repos/' + T + '/contents/' + encodePath(path), {
+        method: 'PUT', body: JSON.stringify(body)
+      });
+    });
+  }
+
+  function putBinary(path, base64, message) {
+    return getFile(path).then(function (existing) {
+      var body = { message: message, content: base64, branch: CFG.branch };
+      if (existing) body.sha = existing.sha;
+      return gh('/repos/' + T + '/contents/' + encodePath(path), {
+        method: 'PUT', body: JSON.stringify(body)
+      });
+    });
+  }
+
+  function deleteFile(path, message) {
+    return getFile(path).then(function (existing) {
+      if (!existing) throw new Error('文件不存在');
+      return gh('/repos/' + T + '/contents/' + encodePath(path), {
+        method: 'DELETE',
+        body: JSON.stringify({ message: message, sha: existing.sha, branch: CFG.branch })
+      });
+    });
+  }
+
+  /* ============================================================
+   * 工具
+   * ============================================================ */
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function formatNow() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+           pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+  }
+  function toLocalInput(dateStr) {
+    var m = String(dateStr || '').match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+    return m ? (m[1] + '-' + m[2] + '-' + m[3] + 'T' + m[4] + ':' + m[5]) : '';
+  }
+  function fromLocalInput(v) {
+    return v ? v.replace('T', ' ') + ':00' : formatNow();
+  }
+  function slugify(t) {
+    return String(t || '').trim().toLowerCase()
+      .replace(/[\s\/\\:*?"<>|]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80);
+  }
+  function toast(msg, bad) {
+    var el = document.createElement('div');
+    el.className = 'toast' + (bad ? ' bad' : '');
+    el.textContent = msg;
+    toasts.appendChild(el);
+    setTimeout(function () { el.remove(); }, bad ? 4200 : 2600);
+  }
+  function withBusy(fn) {
+    if (state.busy) return Promise.resolve();
+    state.busy = true;
+    document.body.style.cursor = 'progress';
+    return Promise.resolve()
+      .then(fn)
+      .catch(function (e) { toast(e.message || '操作失败', true); console.error(e); })
+      .then(function () {
+        state.busy = false;
+        document.body.style.cursor = '';
+      });
+  }
+
+  /* ============================================================
+   * Front-matter 解析 / 生成（只覆盖博客常用的子集）
+   * ============================================================ */
+  function unquote(v) {
+    v = String(v).trim();
+    if ((v.charAt(0) === '"' && v.charAt(v.length - 1) === '"') ||
+        (v.charAt(0) === "'" && v.charAt(v.length - 1) === "'")) {
+      return v.slice(1, -1).replace(/\\"/g, '"').replace(/\\'/g, "'");
+    }
+    return v;
+  }
+  function quoteIfNeeded(v) {
+    var s = String(v == null ? '' : v);
+    if (s === '') return "''";
+    if (/^[^\s:#'"\[\]{}&*!|>%@`].*$/.test(s) && !/[:#]\s/.test(s) && s.indexOf("'") === -1 && s.indexOf('"') === -1) {
+      return s;
+    }
+    return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+  }
+
+  function parsePost(raw) {
+    var m = String(raw).match(/^\uFEFF?---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+    if (!m) return { meta: {}, rawMeta: {}, metaOrder: [], body: String(raw) };
+
+    var meta = {}, rawMeta = {}, metaOrder = [], curKey = null;
+
+    m[1].split(/\r?\n/).forEach(function (line) {
+      if (!line.trim() || /^\s*#/.test(line)) return;
+
+      // 只有顶格（第 0 列）的 key 才算新字段，缩进行归属上一个字段
+      var kv = line.match(/^([A-Za-z0-9_\-]+):\s*(.*)$/);
+      if (kv && !/^\s/.test(line)) {
+        curKey = kv[1];
+        metaOrder.push(curKey);
+        rawMeta[curKey] = [line];
+        var v = kv[2].trim();
+        if (v === '') {
+          meta[curKey] = [];
+        } else if (v.charAt(0) === '[' && v.charAt(v.length - 1) === ']') {
+          meta[curKey] = v.slice(1, -1).split(',')
+            .map(function (x) { return unquote(x); })
+            .filter(function (x) { return x !== ''; });
+        } else {
+          meta[curKey] = unquote(v);
+        }
+        return;
+      }
+
+      if (curKey) {
+        rawMeta[curKey].push(line);
+        var item = line.match(/^\s*-\s+(.*)$/);
+        if (item) {
+          if (!Array.isArray(meta[curKey])) meta[curKey] = [];
+          meta[curKey].push(unquote(item[1]));
+        }
+      }
+    });
+
+    return { meta: meta, rawMeta: rawMeta, metaOrder: metaOrder, body: m[2] };
+  }
+
+  // 后台管理的字段；其余字段（sticky / cover / mathjax …）原样保留
+  var MANAGED_KEYS = { title: 1, date: 1, updated: 1, description: 1, categories: 1, tags: 1 };
+
+  function buildPostFile(f) {
+    var lines = ['---'];
+    lines.push('title: ' + quoteIfNeeded(f.title));
+    lines.push('date: ' + f.date);
+    if (f.updated) lines.push('updated: ' + f.updated);
+    if (f.description) lines.push('description: ' + quoteIfNeeded(f.description));
+    if (f.categories && f.categories.length) {
+      lines.push('categories:');
+      f.categories.forEach(function (c) { lines.push('  - ' + quoteIfNeeded(c)); });
+    }
+    if (f.tags && f.tags.length) {
+      lines.push('tags:');
+      f.tags.forEach(function (t) { lines.push('  - ' + quoteIfNeeded(t)); });
+    }
+
+    // 把不在管理范围内的字段按原始文本带回去，避免编辑器「吞字段」
+    if (f.rawMeta) {
+      (f.metaOrder || []).forEach(function (k) {
+        if (MANAGED_KEYS[k]) return;
+        var block = f.rawMeta[k];
+        if (block && block.length) lines = lines.concat(block);
+      });
+    }
+
+    lines.push('---');
+    lines.push('');
+    return lines.join('\n') + String(f.body || '').replace(/\s+$/, '') + '\n';
+  }
+
+  // 粗略 HTML 预览，只做写作时的观感参考
+  function mdToHtml(md) {
+    var codes = [];
+    var text = String(md || '').replace(/```([a-zA-Z0-9]*)\n([\s\S]*?)```/g, function (_, lang, code) {
+      codes.push('<pre><code>' + esc(code.replace(/\s+$/, '')) + '</code></pre>');
+      return '\u0000' + (codes.length - 1) + '\u0000';
+    });
+
+    var html = esc(text)
+      .replace(/^######\s+(.*)$/gm, '<h6>$1</h6>')
+      .replace(/^#####\s+(.*)$/gm, '<h5>$1</h5>')
+      .replace(/^####\s+(.*)$/gm, '<h4>$1</h4>')
+      .replace(/^###\s+(.*)$/gm, '<h3>$1</h3>')
+      .replace(/^##\s+(.*)$/gm, '<h2>$1</h2>')
+      .replace(/^#\s+(.*)$/gm, '<h1>$1</h1>')
+      .replace(/^&gt;\s?(.*)$/gm, '<blockquote>$1</blockquote>')
+      .replace(/^\s*([-*+])\s+(.*)$/gm, '<li>$2</li>')
+      .replace(/^\s*---+\s*$/gm, '<hr>')
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img alt="$1" src="$2">')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/`([^`\n]+)`/g, '<code>$1</code>');
+
+    html = html.replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, '<ul>$1</ul>');
+    html = html.split(/\n{2,}/).map(function (block) {
+      var t = block.trim();
+      if (!t) return '';
+      if (/^<(h\d|ul|ol|pre|blockquote|hr|table|img)/.test(t) || /^\u0000/.test(t)) return t;
+      return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
+    }).join('\n');
+
+    return html.replace(/\u0000(\d+)\u0000/g, function (_, i) { return codes[+i]; });
+  }
+
+  /* ============================================================
+   * 构建状态
+   * ============================================================ */
+  function renderBadge() {
+    var el = document.getElementById('buildBadge');
+    if (!el) return;
+    var b = state.build;
+    if (!b) { el.className = 'badge'; el.innerHTML = '<span class="dot"></span>构建状态读取中'; return; }
+    if (b.status === 'completed') {
+      if (b.conclusion === 'success') {
+        el.className = 'badge ok';
+        el.innerHTML = '<span class="dot"></span>已上线 ' + timeAgo(b.updated_at);
+      } else {
+        el.className = 'badge fail';
+        el.innerHTML = '<span class="dot"></span>构建失败，点此看日志';
+        el.style.cursor = 'pointer';
+        el.onclick = function () { window.open('https://github.com/' + T + '/actions', '_blank'); };
+      }
+    } else {
+      el.className = 'badge run';
+      el.innerHTML = '<span class="dot"></span>构建中…';
+    }
+  }
+  function timeAgo(iso) {
+    var diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60) return Math.max(1, Math.round(diff)) + ' 秒前';
+    if (diff < 3600) return Math.round(diff / 60) + ' 分钟前';
+    if (diff < 86400) return Math.round(diff / 3600) + ' 小时前';
+    return Math.round(diff / 86400) + ' 天前';
+  }
+  function fetchBuild() {
+    return gh('/repos/' + T + '/actions/runs?branch=' + CFG.branch + '&per_page=1')
+      .then(function (r) {
+        var run = r.data && r.data.workflow_runs && r.data.workflow_runs[0];
+        state.build = run || null;
+        renderBadge();
+        return run;
+      })
+      .catch(function () { /* 静默失败，不打扰用户 */ });
+  }
+  function pollBuild(times) {
+    times = times || 30;
+    var i = 0;
+    var timer = setInterval(function () {
+      i++;
+      fetchBuild().then(function () {
+        if (!state.build || state.build.status === 'completed' || i >= times) clearInterval(timer);
+      });
+    }, 8000);
+  }
+
+  /* ============================================================
+   * 登录
+   * ============================================================ */
+  function renderLogin(errMsg) {
+    app.innerHTML =
+      '<div class="login-wrap"><div class="login">' +
+        '<h1>博客后台</h1>' +
+        '<p class="sub muted">' + esc(T) + ' · 管理头像、首页 Banner 与文章</p>' +
+        '<div class="field">' +
+          '<label for="token">GitHub Token</label>' +
+          '<div class="row">' +
+            '<input id="token" type="password" placeholder="github_pat_… 或 ghp_…" autocomplete="off" spellcheck="false">' +
+            '<button id="togglePwd" class="ghost" type="button" style="flex:0 0 auto">显示</button>' +
+          '</div>' +
+        '</div>' +
+        '<label class="check"><input id="remember" type="checkbox"> 记住此设备（不勾则关闭浏览器即失效）</label>' +
+        '<button id="loginBtn" class="primary block">登录</button>' +
+        (errMsg ? '<div class="err">' + esc(errMsg) + '</div>' : '') +
+        '<details class="tip">' +
+          '<summary>怎么生成 Token？</summary>' +
+          '<ol>' +
+            '<li>打开 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained token 创建页</a></li>' +
+            '<li>Repository access 选 <b>Only select repositories</b> → 勾选 <code>' + esc(CFG.repo) + '</code></li>' +
+            '<li>Permissions 里设置：<br>' +
+              '<code>Contents</code> → Read and write<br>' +
+              '<code>Actions</code> → Read-only</li>' +
+            '<li>生成后复制 <code>github_pat_</code> 开头的字符串填到上面</li>' +
+          '</ol>' +
+        '</details>' +
+      '</div></div>';
+
+    var input = document.getElementById('token');
+    var btn = document.getElementById('loginBtn');
+    input.focus();
+
+    document.getElementById('togglePwd').onclick = function () {
+      var t = input.type === 'password' ? 'text' : 'password';
+      input.type = t;
+      this.textContent = t === 'password' ? '显示' : '隐藏';
+    };
+
+    function submit() {
+      var token = input.value.trim();
+      if (!token) { renderLogin('请先填入 Token'); return; }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spin"></span> 验证中';
+      state.token = token;
+      gh('/user').then(function (u) {
+        state.user = u.data;
+        return gh('/repos/' + T);
+      }).then(function (r) {
+        var perm = r.data.permissions || {};
+        if (!perm.push && !perm.admin) throw new Error('这个 Token 对该仓库没有写入权限，请检查 Contents 权限是否为 Read and write');
+        store.set(token, document.getElementById('remember').checked);
+        boot();
+      }).catch(function (e) {
+        state.token = '';
+        renderLogin(e.message || '登录失败');
+      });
+    }
+    btn.onclick = submit;
+    input.onkeydown = function (e) { if (e.key === 'Enter') submit(); };
+  }
+
+  /* ============================================================
+   * 主界面
+   * ============================================================ */
+  function renderMain() {
+    app.innerHTML =
+      '<header class="bar"><div class="wrap">' +
+        '<div class="brand"><span class="dot"></span>博客后台<span class="muted" style="font-weight:400">／' + esc(T) + '</span></div>' +
+        '<div class="bar-right">' +
+          '<span id="buildBadge" class="badge"><span class="dot"></span>构建状态读取中</span>' +
+          '<a class="btn-sm" style="border:1px solid var(--line);border-radius:7px;padding:5px 10px" href="' + CFG.siteUrl + '" target="_blank" rel="noopener">查看站点 ↗</a>' +
+          '<button id="logout" class="ghost btn-sm">退出</button>' +
+        '</div>' +
+      '</div></header>' +
+      '<div class="wrap">' +
+        '<nav class="tabs">' +
+          '<button data-tab="appearance">外观设置</button>' +
+          '<button data-tab="posts">文章管理</button>' +
+        '</nav>' +
+        '<div id="panel" style="padding:16px 0 60px"></div>' +
+      '</div>';
+
+    document.getElementById('logout').onclick = function () {
+      store.clear();
+      state.user = null;
+      state.token = '';
+      renderLogin();
+    };
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
+      b.onclick = function () {
+        state.tab = b.getAttribute('data-tab');
+        state.editing = null;
+        syncTabs();
+        renderPanel();
+      };
+    });
+    syncTabs();
+    renderBadge();
+    fetchBuild();
+    renderPanel();
+  }
+  function syncTabs() {
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tab') === state.tab);
+    });
+  }
+  function renderPanel() {
+    if (state.tab === 'appearance') renderAppearance();
+    else if (state.editing) renderEditor();
+    else renderPosts();
+  }
+
+  /* ============================================================
+   * 外观设置
+   * ============================================================ */
+  function renderAppearance() {
+    var panel = document.getElementById('panel');
+    panel.innerHTML =
+      '<div class="card">' +
+        '<h2>头像</h2>' +
+        '<p class="hint">显示在侧边栏和文章页作者卡里，建议正方形、≥ 256×256，PNG / JPG / WebP。</p>' +
+        '<div class="preview avatar" id="avatarPreview"></div>' +
+        '<div class="actions">' +
+          '<label class="file-btn">上传图片<input type="file" id="avatarFile" accept="image/*"></label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<h2>首页 Banner</h2>' +
+        '<p class="hint">首页顶部的大图，建议 1920×1080 左右横图，单张 ≤ 2MB（太大拖慢首屏）。</p>' +
+        '<div class="preview banner" id="bannerPreview"></div>' +
+        '<div class="actions">' +
+          '<label class="file-btn">上传图片<input type="file" id="bannerFile" accept="image/*"></label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="actions" style="margin-top:4px">' +
+        '<button id="saveAppearance" class="primary">保存并发布</button>' +
+        '<button id="resetAppearance" class="ghost">恢复默认</button>' +
+        '<span class="muted" id="appHint"></span>' +
+      '</div>';
+
+    paintPreviews();
+
+    document.getElementById('avatarFile').onchange = function () { pickImage(this, 'avatar'); };
+    document.getElementById('bannerFile').onchange = function () { pickImage(this, 'banner'); };
+    document.getElementById('saveAppearance').onclick = saveAppearance;
+    document.getElementById('resetAppearance').onclick = function () {
+      if (!confirm('恢复默认会清空自定义头像和 Banner（图片文件仍留在仓库里），确定吗？')) return;
+      withBusy(function () {
+        return putFile('source/_data/admin.json',
+          JSON.stringify({ avatar: '', banner: '', updatedAt: new Date().toISOString() }, null, 2) + '\n',
+          'chore(admin): 恢复默认外观'
+        ).then(function () {
+          state.current = { avatar: '', banner: '' };
+          state.pending = { avatar: null, banner: null };
+          paintPreviews();
+          toast('已恢复默认，约 1 分钟生效');
+          pollBuild();
+        });
+      });
+    };
+  }
+
+  function paintPreviews() {
+    var av = state.previewUrl.avatar || state.current.avatar || DEFAULT_AVATAR;
+    var bn = state.previewUrl.banner || state.current.banner;
+
+    var avEl = document.getElementById('avatarPreview');
+    if (avEl) avEl.innerHTML = '<img src="' + esc(av) + '" alt="头像预览">';
+
+    var bnEl = document.getElementById('bannerPreview');
+    if (bnEl) {
+      bnEl.innerHTML = bn
+        ? '<img src="' + esc(bn) + '" alt="Banner 预览">'
+        : '<div class="ph">未设置，当前使用主题默认配色背景<br>上传一张图和博客更配</div>';
+    }
+    var hint = document.getElementById('appHint');
+    if (hint) hint.textContent = (state.pending.avatar || state.pending.banner) ? '有未保存的图片' : '';
+  }
+
+  function pickImage(input, kind) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    if (!/^image\//.test(file.type)) { toast('请选择图片文件', true); return; }
+    if (file.size > 4 * 1024 * 1024) { toast('图片超过 4MB，建议先压缩', true); return; }
+    state.pending[kind] = file;
+    if (state.previewUrl[kind]) URL.revokeObjectURL(state.previewUrl[kind]);
+    state.previewUrl[kind] = URL.createObjectURL(file);
+    paintPreviews();
+    toast('已选择图片，点「保存并发布」生效');
+  }
+
+  function uploadImage(file, kind) {
+    var ext = (String(file.name).split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+    var repoPath = 'source/img/' + kind + '-' + Date.now() + '.' + ext;
+    return file.arrayBuffer().then(function (buf) {
+      return putBinary(repoPath, b64FromBytes(new Uint8Array(buf)),
+        'chore(admin): 上传' + (kind === 'avatar' ? '头像' : '首页 Banner'));
+    }).then(function () {
+      return '/' + repoPath.replace(/^source\//, '');
+    });
+  }
+
+  function saveAppearance() {
+    withBusy(function () {
+      var avatar = state.current.avatar;
+      var banner = state.current.banner;
+      var chain = Promise.resolve();
+
+      if (state.pending.avatar) {
+        chain = chain.then(function () {
+          return uploadImage(state.pending.avatar, 'avatar').then(function (url) { avatar = url; });
+        });
+      }
+      if (state.pending.banner) {
+        chain = chain.then(function () {
+          return uploadImage(state.pending.banner, 'banner').then(function (url) { banner = url; });
+        });
+      }
+      return chain.then(function () {
+        return putFile('source/_data/admin.json',
+          JSON.stringify({ avatar: avatar, banner: banner, updatedAt: new Date().toISOString() }, null, 2) + '\n',
+          'chore(admin): 更新外观设置');
+      }).then(function () {
+        state.current = { avatar: avatar, banner: banner };
+        state.pending = { avatar: null, banner: null };
+        ['avatar', 'banner'].forEach(function (k) {
+          if (state.previewUrl[k]) { URL.revokeObjectURL(state.previewUrl[k]); state.previewUrl[k] = ''; }
+        });
+        paintPreviews();
+        toast('已提交，约 1 分钟后自动上线');
+        pollBuild();
+      });
+    });
+  }
+
+  /* ============================================================
+   * 文章列表
+   * ============================================================ */
+  function renderPosts() {
+    var panel = document.getElementById('panel');
+    panel.innerHTML =
+      '<div class="card">' +
+        '<div class="toolbar">' +
+          '<button id="newPost" class="primary">写新文章</button>' +
+          '<label class="file-btn">导入 .md<input type="file" id="importMd" accept=".md,.markdown,text/markdown"></label>' +
+          '<span class="spacer"></span>' +
+          '<button id="refreshPosts" class="ghost btn-sm">刷新</button>' +
+        '</div>' +
+        '<div id="postList"><div class="empty"><span class="spin"></span> 读取文章中…</div></div>' +
+      '</div>' +
+      '<p class="muted" style="font-size:13px;margin:0 0 0 2px">' +
+        '所有改动都会直接提交到 ' + esc(CFG.branch) + ' 分支，推送后约 1 分钟自动发布。' +
+        '如果你本地也 clone 了仓库，记得先 <code>git pull</code> 再提交，避免冲突。' +
+      '</p>';
+
+    document.getElementById('newPost').onclick = function () {
+      state.editing = {
+        mode: 'create', path: '', slug: '',
+        title: '', date: formatNow(), categories: [], tags: [], description: '', body: '', updated: ''
+      };
+      renderEditor();
+    };
+    document.getElementById('refreshPosts').onclick = function () { state.posts = null; renderPosts(); };
+    document.getElementById('importMd').onchange = function () {
+      var file = this.files && this.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        var parsed = parsePost(reader.result);
+        var base = String(file.name).replace(/\.(md|markdown)$/i, '');
+        state.editing = {
+          mode: 'create',
+          path: '',
+          slug: slugify(parsed.meta.title || base),
+          title: parsed.meta.title || base,
+          date: parsed.meta.date || formatNow(),
+          categories: arr(parsed.meta.categories),
+          tags: arr(parsed.meta.tags),
+          description: scalar(parsed.meta.description),
+          body: parsed.body,
+          updated: '',
+          rawMeta: parsed.rawMeta,
+          metaOrder: parsed.metaOrder
+        };
+        renderEditor();
+        toast('已导入，确认无误后保存');
+      };
+      reader.readAsText(file, 'utf-8');
+    };
+
+    loadPosts();
+  }
+
+  function arr(v) {
+    if (!v) return [];
+    if (Array.isArray(v)) return v.filter(Boolean);
+    return [String(v)];
+  }
+  function scalar(v) {
+    if (!v) return '';
+    if (Array.isArray(v)) return v.join(', ');
+    return String(v);
+  }
+
+  function loadPosts() {
+    if (state.posts) { paintPosts(); return; }
+    gh('/repos/' + T + '/contents/source/_posts?ref=' + CFG.branch).then(function (r) {
+      var files = (r.data || []).filter(function (f) {
+        return f.type === 'file' && /\.(md|markdown)$/i.test(f.name);
+      });
+      return mapLimit(files, 6, function (f) {
+        return getFile(f.path).then(function (file) {
+          var parsed = parsePost(file.text || '');
+          return {
+            name: f.name,
+            path: f.path,
+            sha: f.sha,
+            title: parsed.meta.title || f.name.replace(/\.md$/i, ''),
+            date: String(parsed.meta.date || ''),
+            categories: arr(parsed.meta.categories)
+          };
+        }).catch(function () {
+          return { name: f.name, path: f.path, sha: f.sha, title: f.name, date: '', categories: [] };
+        });
+      });
+    }).then(function (list) {
+      list.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+      state.posts = list;
+      paintPosts();
+    }).catch(function (e) {
+      var el = document.getElementById('postList');
+      if (el) el.innerHTML = '<div class="empty">读取失败：' + esc(e.message) + '</div>';
+    });
+  }
+
+  function mapLimit(items, limit, fn) {
+    var out = new Array(items.length), i = 0;
+    function next() {
+      if (i >= items.length) return Promise.resolve();
+      var idx = i++;
+      return Promise.resolve(fn(items[idx])).then(function (r) { out[idx] = r; return next(); });
+    }
+    var workers = [];
+    for (var k = 0; k < Math.min(limit, items.length); k++) workers.push(next());
+    return Promise.all(workers).then(function () { return out; });
+  }
+
+  function paintPosts() {
+    var el = document.getElementById('postList');
+    if (!el) return;
+    if (!state.posts || !state.posts.length) {
+      el.innerHTML = '<div class="empty">还没有文章，点「写新文章」开始吧</div>';
+      return;
+    }
+    var rows = state.posts.map(function (p, i) {
+      return '<tr>' +
+        '<td class="title">' + esc(p.title) + '</td>' +
+        '<td class="muted" style="white-space:nowrap">' + esc(String(p.date).slice(0, 10)) + '</td>' +
+        '<td class="muted">' + esc(p.categories.join(' / ') || '—') + '</td>' +
+        '<td class="actions-cell">' +
+          '<button class="btn-sm" data-edit="' + i + '">编辑</button> ' +
+          '<button class="btn-sm danger" data-del="' + i + '">删除</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    el.innerHTML = '<table><thead><tr>' +
+      '<th>标题</th><th>日期</th><th>分类</th><th style="text-align:right">操作</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+    el.querySelectorAll('[data-edit]').forEach(function (b) {
+      b.onclick = function () { openEditor(+b.getAttribute('data-edit')); };
+    });
+    el.querySelectorAll('[data-del]').forEach(function (b) {
+      b.onclick = function () { removePost(+b.getAttribute('data-del')); };
+    });
+  }
+
+  function openEditor(i) {
+    var p = state.posts[i];
+    withBusy(function () {
+      return getFile(p.path).then(function (file) {
+        var parsed = parsePost(file.text || '');
+        state.editing = {
+          mode: 'edit',
+          path: p.path,
+          slug: p.name.replace(/\.(md|markdown)$/i, ''),
+          title: parsed.meta.title || p.title,
+          date: scalar(parsed.meta.date) || formatNow(),
+          categories: arr(parsed.meta.categories),
+          tags: arr(parsed.meta.tags),
+          description: scalar(parsed.meta.description),
+          body: parsed.body,
+          updated: scalar(parsed.meta.updated),
+          rawMeta: parsed.rawMeta,
+          metaOrder: parsed.metaOrder
+        };
+        renderEditor();
+      });
+    });
+  }
+
+  function removePost(i) {
+    var p = state.posts[i];
+    if (!confirm('确定删除《' + p.title + '》？\n会从仓库里移除 ' + p.path + '，历史 commit 里仍可找回。')) return;
+    withBusy(function () {
+      return deleteFile(p.path, 'chore(admin): 删除文章 ' + p.name).then(function () {
+        state.posts = null;
+        toast('已删除，约 1 分钟后下线');
+        renderPosts();
+        pollBuild();
+      });
+    });
+  }
+
+  /* ============================================================
+   * 文章编辑器
+   * ============================================================ */
+  function renderEditor() {
+    var f = state.editing;
+    var panel = document.getElementById('panel');
+    panel.innerHTML =
+      '<div class="card">' +
+        '<div class="editor-head">' +
+          '<h2>' + (f.mode === 'create' ? '写新文章' : '编辑文章') + '</h2>' +
+          '<div class="actions" style="margin:0">' +
+            '<button id="cancelEdit" class="ghost">取消</button>' +
+            '<button id="savePost" class="primary">保存并发布</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="editor-grid">' +
+          '<div class="field"><label>标题</label><input type="text" id="fTitle" value="' + esc(f.title) + '" placeholder="文章标题"></div>' +
+          '<div class="field"><label>日期</label><input type="datetime-local" id="fDate" value="' + esc(toLocalInput(f.date)) + '"></div>' +
+          '<div class="field"><label>分类（逗号分隔）</label><input type="text" id="fCats" value="' + esc(f.categories.join(', ')) + '" placeholder="随笔, 前端"></div>' +
+          '<div class="field"><label>标签（逗号分隔）</label><input type="text" id="fTags" value="' + esc(f.tags.join(', ')) + '" placeholder="Hexo, 教程"></div>' +
+          '<div class="field" style="grid-column:1/-1"><label>摘要（可选，显示在首页文章列表）</label><input type="text" id="fDesc" value="' + esc(f.description) + '"></div>' +
+          '<div class="field" style="grid-column:1/-1"><label>文件名 / 链接（' +
+            (f.mode === 'create' ? '决定文章 URL，可用中文，留空则按标题生成' : '已固定，改动等于换链接') +
+          '）</label><input type="text" id="fSlug" value="' + esc(f.slug) + '" ' + (f.mode === 'create' ? '' : 'readonly') + '></div>' +
+        '</div>' +
+        '<div class="editor-body">' +
+          '<div class="toolbar" style="margin-bottom:8px">' +
+            '<label style="font-size:13px;color:var(--muted)">正文（Markdown）</label>' +
+            '<span class="spacer"></span>' +
+            '<button id="togglePreview" class="ghost btn-sm">预览</button>' +
+          '</div>' +
+          '<textarea id="fBody" spellcheck="false">' + esc(f.body) + '</textarea>' +
+          '<div class="md-preview" id="mdPreview" hidden></div>' +
+        '</div>' +
+      '</div>';
+
+    document.getElementById('cancelEdit').onclick = function () {
+      state.editing = null;
+      renderPanel();
+    };
+    document.getElementById('savePost').onclick = savePost;
+
+    var bodyEl = document.getElementById('fBody');
+    var prevEl = document.getElementById('mdPreview');
+    document.getElementById('togglePreview').onclick = function () {
+      var showing = !prevEl.hidden;
+      if (showing) { prevEl.hidden = true; bodyEl.hidden = false; this.textContent = '预览'; }
+      else {
+        prevEl.innerHTML = mdToHtml(bodyEl.value) || '<p class="muted">（空）</p>';
+        prevEl.hidden = false; bodyEl.hidden = true; this.textContent = '编辑';
+      }
+    };
+  }
+
+  function savePost() {
+    var f = state.editing;
+    var title = document.getElementById('fTitle').value.trim();
+    if (!title) { toast('标题不能为空', true); return; }
+
+    var dateInput = document.getElementById('fDate').value;
+    var slug = slugify(document.getElementById('fSlug').value) || slugify(title);
+    if (!slug) { toast('请填写文件名', true); return; }
+
+    var data = {
+      title: title,
+      date: fromLocalInput(dateInput),
+      categories: splitList(document.getElementById('fCats').value),
+      tags: splitList(document.getElementById('fTags').value),
+      description: document.getElementById('fDesc').value.trim(),
+      body: document.getElementById('fBody').value,
+      rawMeta: f.rawMeta,
+      metaOrder: f.metaOrder
+    };
+
+    var path = f.path || ('source/_posts/' + slug + '.md');
+    var isCreate = f.mode === 'create';
+    var msg = (isCreate ? 'post: 新增《' : 'post: 更新《') + title + '》';
+
+    withBusy(function () {
+      var writing = isCreate
+        ? getFile(path).then(function (existing) {
+            if (existing) throw new Error('文件名 "' + slug + '.md" 已存在，换一个吧');
+            return putFile(path, buildPostFile(data), msg);
+          })
+        : (function () {
+            data.updated = formatNow();
+            return putFile(path, buildPostFile(data), msg);
+          })();
+
+      // 收尾必须写在这里：withBusy 会捕获异常，外层的 then 在失败时也会执行
+      return writing.then(function () {
+        state.editing = null;
+        state.posts = null;
+        state.tab = 'posts';
+        toast(isCreate ? '已发布，约 1 分钟后上线' : '已保存，约 1 分钟后生效');
+        syncTabs();
+        renderPosts();
+        pollBuild();
+      });
+    });
+  }
+
+  function splitList(v) {
+    return String(v || '').split(/[,，]/).map(function (s) { return s.trim(); })
+      .filter(function (s) { return s !== ''; });
+  }
+
+  /* ============================================================
+   * 启动
+   * ============================================================ */
+  function loadAppearance() {
+    return getFile('source/_data/admin.json').then(function (file) {
+      if (!file) return;
+      try {
+        var data = JSON.parse(file.text);
+        state.current = { avatar: data.avatar || '', banner: data.banner || '' };
+      } catch (e) { /* 文件损坏就当默认 */ }
+    }).catch(function () {});
+  }
+
+  function boot() {
+    var saved = store.get();
+    if (saved) state.token = saved;
+
+    if (!state.token) { renderLogin(); return; }
+
+    gh('/user').then(function (u) {
+      state.user = u.data;
+      return loadAppearance();
+    }).then(function () {
+      renderMain();
+    }).catch(function () {
+      store.clear();
+      state.token = '';
+      renderLogin('登录状态已失效，请重新登录');
+    });
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

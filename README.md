@@ -13,11 +13,15 @@ blog/
 ├── _config.butterfly.yml       # 主题配置（导航、社交、侧边栏、搜索等）
 ├── source/
 │   ├── _posts/                 # 文章，一篇一个 .md
+│   ├── _data/admin.json        # 后台写入的外观配置（头像 / Banner）
+│   ├── admin/index.html        # 博客后台（纯静态 SPA，不经过 Hexo 渲染）
 │   ├── about/index.md          # 关于页
 │   ├── tags/index.md           # 标签页
 │   └── categories/index.md     # 分类页
 ├── themes/butterfly/           # 主题（npm install 后自动生成，已被 git 忽略）
-├── scripts/setup-theme.js      # 把 node_modules 里的主题同步到 themes/
+├── scripts/
+│   ├── setup-theme.js          # 把 node_modules 里的主题同步到 themes/
+│   └── admin-overrides.js      # 构建时把 admin.json 注入主题配置
 └── .github/workflows/pages.yml # 自动部署流水线
 ```
 
@@ -33,6 +37,43 @@ npx hexo clean       # 清缓存（改了主题配置没生效时先用它）
 
 > 主题不是 git 子模块，而是由 `package.json` 里的 `hexo-theme-butterfly` 版本锁定。
 > 升级主题：改 `package.json` 里的版本号 → `npm install` → 重新 `hexo server`。
+
+## 后台管理
+
+地址：**https://yayo556788.github.io/admin/**
+
+能做的事：
+
+- **外观设置**：上传并替换头像、首页 Banner，可一键恢复默认
+- **文章管理**：列表查看、写新文章、编辑已有文章、删除、导入本地 `.md` 文件
+- 右上角显示最近一次构建状态，提交后约 1 分钟自动上线
+
+### 首次登录
+
+后台用 GitHub Token 认证，不依赖任何第三方服务：
+
+1. 打开 [Fine-grained token 创建页](https://github.com/settings/personal-access-tokens/new)
+2. **Repository access** → Only select repositories → 只勾 `yayo556788.github.io`
+3. **Permissions** 设两项：`Contents` = Read and write，`Actions` = Read-only
+4. 生成后把 `github_pat_…` 贴进后台登录框
+
+勾选「记住此设备」会把 token 存在浏览器 localStorage（关掉浏览器仍有效），不勾则存在 sessionStorage（关闭标签页即失效）。**公共电脑上不要勾。**
+
+### 安全模型（重要）
+
+- token 只存在于你自己的浏览器，只在 `api.github.com` 之间传输，**不会**进入仓库、不会写进构建产物
+- 后台页面本身是公开的（`/admin/` 谁都能打开），但没有 token 做不了任何操作
+- 所以务必用**细粒度 token 且只授权这一个仓库**，用完可随时在 GitHub 上撤销
+- 想更保险：给 token 设短的有效期（如 90 天），到期重新生成
+
+### 生效与同步
+
+- 后台的每次保存 = 往 `main` 分支提交一个 commit → 触发 Actions 重构 → 约 1 分钟生效
+- **如果你本地也 clone 了仓库，后台改完记得先 `git pull` 再改本地**，否则推送会冲突
+- 外观配置走 `source/_data/admin.json` + `scripts/admin-overrides.js` 注入，不直接改 `_config.butterfly.yml`，所以主题升级不会影响后台
+
+> 换仓库部署时，除改 `_config.yml` 的 `url`/`root` 外，还要改 `source/admin/index.html` 顶部 `CFG` 里的 owner / repo / branch / siteUrl。
+
 
 ## 发布到 GitHub
 

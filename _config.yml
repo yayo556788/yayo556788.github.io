@@ -32,7 +32,10 @@ archive_dir: archives
 category_dir: categories
 code_dir: downloads/code
 i18n_dir: :lang
+# 后台页面是纯静态 SPA，交给浏览器跑，不要让 Hexo 套主题模板渲染
 skip_render:
+  - 'admin/**'
+  - 'admin/index.html'
 
 # ---------- 写作 ----------
 new_post_name: :title.md
